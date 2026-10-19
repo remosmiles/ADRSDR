@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="de" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ADR/SDR Gotthard-Tunnel Checker | Kat. E</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        adr: {
+                            orange: '#FF6600',
+                            dark: '#0f172a',
+                            card: '#1e293b'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .adr-plate {
+            background-color: #FF6600;
+            border: 4px solid #000000;
+            color: #000000;
+            font-family: 'Arial Black', Impact, sans-serif;
+            position: relative;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+        .adr-plate-divider {
+            height: 4px;
+            background-color: #000000;
+            width: 100%;
+        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #1e293b; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans selection:bg-orange-500 selection:text-white pb-12">
+
+    <!-- Top Header -->
+    <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-30 shadow-md">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-8 adr-plate flex flex-col items-center justify-center text-[10px] font-black leading-none rounded-sm shrink-0">
+                    <span>33</span>
+                    <div class="adr-plate-divider my-0.5"></div>
+                    <span>1203</span>
+                </div>
+                <div>
+                    <h1 class="font-bold text-base sm:text-lg tracking-tight text-white flex items-center gap-2">
+                        Gotthard ADR/SDR Check
+                        <span class="bg-red-600 text-white text-[11px] font-extrabold px-2 py-0.5 rounded uppercase tracking-wider">Kat. E</span>
+                    </h1>
+                    <p class="text-xs text-slate-400">Prüfung nach ADR 2025 &amp; SDR (Anhang 2) • A2 Göschenen–Airolo</p>
+                </div>
+            </div>
+            <button id="resetBtn" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-2 rounded-lg border border-slate-700 transition flex items-center gap-1.5">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                <span>Reset</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-4 mt-6 space-y-6">
+
+        <!-- Info Notice -->
+        <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3.5 flex items-start gap-3 text-xs text-slate-300">
+            <svg class="w-5 h-5 text-orange-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+            <div>
+                <span class="font-semibold text-white">Rechtlicher Hinweis (SDR / ADR 1.9.5):</span> Der Gotthard-Strassentunnel ist der <strong>Tunnelkategorie E</strong> zugeordnet. Kennzeichnungspflichtige Transporte sind grundsätzlich verboten (Ausnahme: UN 2919, 3291, 3331, 3359, 3373 sowie Stoffe mit Tunnelcode (-)). Bei Mischladungen werden die Punkte aller Güter nach 1.1.3.6.4 ADR addiert!
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <!-- Left Column: Input Form -->
+            <section class="lg:col-span-7 space-y-4">
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg space-y-5">
+                    <h2 class="text-sm font-bold uppercase tracking-wider text-slate-400 border-b border-slate-800 pb-2.5 flex justify-between items-center">
+                        <span>1. Gefahrgut &amp; Beförderungsart</span>
+                        <span class="text-[11px] font-normal text-orange-400">Praxis-Check</span>
+                    </h2>
+
+                    <!-- Quick Select Pills -->
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-2">Häufig kontrollierte UN-Nummern (Schnellwahl):</label>
+                        <div class="flex flex-wrap gap-1.5" id="quickPills"></div>
+                    </div>
+
+                    <!-- UN Search Input -->
+                    <div class="relative">
+                        <label for="unSearch" class="block text-sm font-medium text-slate-200 mb-1.5">UN-Nummer oder Stoffname suchen</label>
+                        <div class="relative">
+                            <input type="text" id="unSearch" autocomplete="off" placeholder="z.B. 1202, 1203, 1965, Diesel, Benzin, Argon..." 
+                                class="w-full bg-slate-950 border border-slate-700 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 rounded-xl px-4 py-3 text-white placeholder-slate-500 text-base outline-none transition">
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            </div>
+                        </div>
+
+                        <!-- Autocomplete Dropdown -->
+                        <div id="autocompleteList" class="hidden absolute z-40 w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl max-h-72 overflow-y-auto divide-y divide-slate-800"></div>
+                    </div>
+
+                    <!-- Variant / Packing Group Selector (Dynamic) -->
+                    <div id="variantContainer" class="hidden">
+                        <label for="variantSelect" class="block text-sm font-medium text-slate-200 mb-1.5">Verpackungsgruppe (VG) / Spezifikation</label>
+                        <select id="variantSelect" class="w-full bg-slate-950 border border-slate-700 focus:border-orange-500 rounded-xl px-3.5 py-2.5 text-white text-sm outline-none"></select>
+                    </div>
+
+                    <!-- Transport Mode & Quantity -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="transportMode" class="block text-sm font-medium text-slate-200 mb-1.5">Beförderungsart</label>
+                            <select id="transportMode" class="w-full bg-slate-950 border border-slate-700 focus:border-orange-500 rounded-xl px-3.5 py-3 text-white text-sm outline-none">
+                                <option value="package">Stückgut / Versandstücke</option>
+                                <option value="tank">Tank / Tankcontainer / Batterie-Fz</option>
+                                <option value="bulk">Lose Schüttung (Schüttgut)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="quantityInput" class="block text-sm font-medium text-slate-200 mb-1.5">
+                                Menge <span id="unitHint" class="text-xs text-slate-400 font-normal">(kg / Liter / NEM)</span>
+                            </label>
+                            <div class="relative">
+                                <input type="number" id="quantityInput" min="0" step="any" placeholder="z.B. 450" value="400"
+                                    class="w-full bg-slate-950 border border-slate-700 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 rounded-xl px-4 py-3 text-white text-base outline-none transition pr-16">
+                                <span id="unitBadge" class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-xs font-semibold text-slate-400 pointer-events-none">
+                                    kg / L
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Special Exemptions Checkboxes -->
+                    <div class="pt-2 border-t border-slate-800 space-y-2.5">
+                        <span class="block text-xs font-semibold uppercase tracking-wider text-slate-400">Sonderfälle &amp; Freistellungen</span>
+                        
+                        <label class="flex items-start gap-3 p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80 cursor-pointer hover:border-slate-700 transition">
+                            <input type="checkbox" id="lqCheckbox" class="mt-1 w-4 h-4 accent-orange-500 rounded cursor-pointer">
+                            <div class="text-xs">
+                                <span class="font-semibold text-slate-200 block">Begrenzte Mengen (LQ / Limited Quantities - Kap. 3.4 ADR)</span>
+                                <span class="text-slate-400">Verpackt in Innenverpackungen. Achtung: Ab &gt; 8 t Bruttomasse (bei Fz &gt; 12 t) gilt Kennzeichnungspflicht &amp; Tunnelverbot Kat. E!</span>
+                            </div>
+                        </label>
+
+                        <label class="flex items-start gap-3 p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80 cursor-pointer hover:border-slate-700 transition">
+                            <input type="checkbox" id="eqCheckbox" class="mt-1 w-4 h-4 accent-orange-500 rounded cursor-pointer">
+                            <div class="text-xs">
+                                <span class="font-semibold text-slate-200 block">Freigestellte Mengen (EQ / Excepted Quantities - Kap. 3.5 ADR)</span>
+                                <span class="text-slate-400">Kleinstmengen (Code E1–E5), max. 1000 Versandstücke pro Fahrzeug.</span>
+                            </div>
+                        </label>
+
+                        <label class="flex items-start gap-3 p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80 cursor-pointer hover:border-slate-700 transition">
+                            <input type="checkbox" id="emptyUnvCheckbox" class="mt-1 w-4 h-4 accent-orange-500 rounded cursor-pointer">
+                            <div class="text-xs">
+                                <span class="font-semibold text-slate-200 block">Ungereinigte leere Verpackungen (BK 4)</span>
+                                <span class="text-slate-400">Leere, ungereinigte Gebinde (Ausnahme: Stoffe der BK 0 bleiben in BK 0!).</span>
+                            </div>
+                        </label>
+                    </div>
+
+                    <!-- Add to Mixed Load Button -->
+                    <div class="pt-2 flex justify-end">
+                        <button id="addToListBtn" class="w-full sm:w-auto bg-slate-800 hover:bg-slate-700 text-orange-400 font-semibold text-xs py-2.5 px-4 rounded-xl border border-slate-700 transition flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            <span>Position zur Mischladungs-Liste (1.1.3.6.4) hinzufügen</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Mixed Load List (1.1.3.6.4 ADR) -->
+                <div id="mixedLoadCard" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+                        <h3 class="text-sm font-bold uppercase tracking-wider text-slate-300">Mischladungs-Rechner (1.1.3.6.4 ADR)</h3>
+                        <button id="clearListBtn" class="text-xs text-red-400 hover:text-red-300">Liste leeren</button>
+                    </div>
+                    <div id="mixedLoadItems" class="space-y-2 text-xs"></div>
+                    <div class="p-3 bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-between">
+                        <span class="text-xs font-semibold text-slate-300">Gesamtpunkte der Ladung:</span>
+                        <span id="mixedTotalPoints" class="text-lg font-black text-orange-400">0 Punkte</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Column: Result Display -->
+            <section class="lg:col-span-5 space-y-4">
+                
+                <!-- Status Banner -->
+                <div id="statusBanner" class="rounded-2xl p-5 border-2 shadow-xl transition-all duration-200">
+                    <div class="flex items-center gap-3.5">
+                        <div id="statusIcon" class="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 font-black text-2xl"></div>
+                        <div>
+                            <span class="text-[11px] font-bold uppercase tracking-widest opacity-80 block">Gotthard-Strassentunnel (Kat. E)</span>
+                            <h2 id="statusTitle" class="text-xl sm:text-2xl font-black tracking-tight leading-tight"></h2>
+                        </div>
+                    </div>
+                    <p id="statusReason" class="mt-3 text-sm font-medium leading-relaxed border-t border-black/20 pt-3"></p>
+                </div>
+
+                <!-- Points Progress Bar Card -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg space-y-3">
+                    <div class="flex justify-between items-baseline">
+                        <div>
+                            <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">1000-Punkte-Regel (1.1.3.6 ADR)</span>
+                            <span id="calcFormulaText" class="text-xs text-slate-400">Menge × Faktor</span>
+                        </div>
+                        <div class="text-right">
+                            <span id="pointsValue" class="text-2xl font-black text-white">0</span>
+                            <span class="text-xs text-slate-400"> / 1000 Pkt.</span>
+                        </div>
+                    </div>
+                    <div class="w-full h-3 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+                        <div id="pointsBar" class="h-full transition-all duration-300 rounded-full" style="width: 0%"></div>
+                    </div>
+                    <div class="flex justify-between text-[11px] text-slate-400">
+                        <span id="catBadge">Beförderungskategorie: -</span>
+                        <span id="maxLimitText">Freigrenze: -</span>
+                    </div>
+                </div>
+
+                <!-- Substance Details & ADR Plate -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg space-y-4">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="space-y-1">
+                            <span class="text-xs font-bold text-orange-400 uppercase tracking-wider" id="detailUnClass">UN ---- • Klasse -</span>
+                            <h3 class="text-base font-bold text-white leading-snug" id="detailName">Bitte Stoff auswählen</h3>
+                            <p class="text-xs text-slate-400" id="detailNotes"></p>
+                        </div>
+                        <!-- Visual Orange Plate -->
+                        <div class="w-20 h-16 adr-plate rounded flex flex-col items-center justify-center shrink-0 select-none">
+                            <span id="plateHin" class="text-base font-black leading-none tracking-tighter">30</span>
+                            <div class="adr-plate-divider my-1"></div>
+                            <span id="plateUn" class="text-base font-black leading-none tracking-tighter">1202</span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2 pt-2 border-t border-slate-800 text-center">
+                        <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800/80">
+                            <span class="text-[10px] uppercase text-slate-400 block">Gefahrzettel</span>
+                            <span id="detailLabels" class="text-sm font-bold text-white mt-0.5 block">-</span>
+                        </div>
+                        <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800/80">
+                            <span class="text-[10px] uppercase text-slate-400 block">Tunnelcode</span>
+                            <span id="detailTrc" class="text-sm font-bold text-orange-400 mt-0.5 block">-</span>
+                        </div>
+                        <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800/80">
+                            <span class="text-[10px] uppercase text-slate-400 block">Warntafel nötig?</span>
+                            <span id="detailPlateReq" class="text-sm font-bold text-white mt-0.5 block">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Requirements & Alternative Routes -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg space-y-3">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 border-b border-slate-800 pb-2">Auflagen &amp; Kontrollpunkte (ADR / SDR)</h3>
+                    <ul id="requirementsList" class="space-y-2 text-xs text-slate-300"></ul>
+
+                    <div id="altRouteBox" class="hidden mt-4 pt-3 border-t border-slate-800 bg-slate-950/90 p-3.5 rounded-xl border border-red-900/50 space-y-1.5">
+                        <span class="text-xs font-bold text-red-400 uppercase tracking-wider flex items-center gap-1.5">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg>
+                            Massnahmen &amp; Alternativrouten bei Verbot:
+                        </span>
+                        <p class="text-xs text-slate-300 leading-relaxed" id="altRouteText"></p>
+                    </div>
+                </div>
+
+            </section>
+        </div>
+    </main>
+
+    <script src="./data/adr-data.js"></script>
+    <script src="./js/app.js"></script>
+</body>
+</html>
